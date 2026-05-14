@@ -10,6 +10,8 @@ import { SearchButton } from "@/components/ui/buttons/SearchButton"
 import { FilterButton } from "@/components/ui/buttons/FilterButton"
 import { ClearFiltersButton } from "@/components/ui/buttons/ClearFiltersButton"
 import { SaveChangesButton } from "@/components/ui/buttons/SaveChangesButton"
+import ListingCard from "@/components/ListingCard"
+import ListingCardSkeleton from "@/components/ListingCardSkeleton"
 
 function Section({ title, children }) {
   return (
@@ -24,6 +26,16 @@ function Section({ title, children }) {
 }
 
 function ShowcasePage() {
+
+  const sampleListing = {
+    title: "Homemade Chocolate Chip Cookies",
+    price: 150,
+    category: "Food & Bakery",
+    pickup_location: "Chandigarh",
+    listing_type: "sell",
+    image_urls: ["https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400"]
+  }
+
   return (
     <div className="min-h-screen bg-[#e8eaf0] p-10 flex flex-col gap-10">
 
@@ -56,6 +68,18 @@ function ShowcasePage() {
 
       <Section title="Form Actions">
         <SaveChangesButton />
+      </Section>
+
+      <Section title="Listing Card">
+        <div className="w-full max-w-[540px]">
+          <ListingCard listing={sampleListing} />
+        </div>
+      </Section>
+
+      <Section title="Listing Card Skeleton">
+        <div className="w-full max-w-[540px]">
+          <ListingCardSkeleton />
+        </div>
       </Section>
 
     </div>
