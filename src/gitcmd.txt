@@ -1,0 +1,7 @@
+overwrite evert
+hing12:31 AMClaude responded: Run these two commands one by one:Run these two commands one by one:
+bashgit checkout -- .
+bashgit clean -fd
+Then pull:
+bashgit pull origin main
+First command discards modified files, second removes untracked files, then pull brings in the latest code.

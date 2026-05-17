@@ -6,7 +6,7 @@ import { PayNowButton } from "@/components/ui/buttons/PayNowButton"
 import { EditListingButton } from "@/components/ui/buttons/EditListingButton"
 import { DeleteListingButton } from "@/components/ui/buttons/DeleteListingButton"
 import LoadingSpinner from "@/components/LoadingSpinner"
-import { getListing } from "@/api/listings"
+import { getListingById } from "@/api/listings"
 
 function ListingTypeBadge({ type }) {
   const styles = {
@@ -39,7 +39,7 @@ function ListingDetailPage() {
       setLoading(true)
       setError(null)
       try {
-        const data = await getListing(id)
+        const data = await getListingById(id)
         setListing(data.listing || data)
       } catch (err) {
         setError(err.message)

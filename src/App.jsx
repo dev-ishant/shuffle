@@ -9,6 +9,7 @@ import ListingsPage from "@/pages/ListingsPage"
 import ListingDetailPage from "@/pages/ListingDetailPage"
 import CreateListingPage from "@/pages/CreateListingPage"
 import ProfilePage from "@/pages/ProfilePage"
+import CartPage from "@/pages/CartPage"
 
 function AppContent() {
   const location = useLocation()
@@ -30,6 +31,7 @@ function AppContent() {
         <Route path="/create" element={<CreateListingPage />} />
         <Route path="/create-listing" element={<CreateListingPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/cart" element={<CartPage />} />
         {/* Catch-all 404 Route */}
         <Route path="*" element={
           <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gray-50">

@@ -3,13 +3,14 @@ import { Link, useNavigate } from "react-router-dom"
 import {
   User, Package, Plus, LogOut, Edit3, MapPin, Star,
   ShoppingBag, RefreshCw, Heart, Settings, ChevronRight,
-  Camera, Sparkles, TrendingUp
+  Camera, Sparkles, TrendingUp, Calendar, BadgeCheck,
+  ArrowRight, PackageOpen
 } from "lucide-react"
 import ListingCard from "@/components/ListingCard"
 import ListingCardSkeleton from "@/components/ListingCardSkeleton"
 import { getUserListings, getProfile } from "@/api/listings"
 
-// ── Demo fallback ─────────────────────────────────────────────────────────────
+// ── Demo fallback ──────────────────────────────────────────────────────────────
 const DEMO_PROFILE = {
   name: "Priya Sharma",
   email: "priya.sharma@email.com",
@@ -27,22 +28,14 @@ const DEMO_LISTINGS = [
   { id: 3, title: "Lavender Scented Soy Candle", price: 200, category: "Candles & Soaps", pickup_location: "Amritsar, Punjab", listing_type: "sell", image_urls: ["https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600"] },
 ]
 
-const STATS = [
-  { icon: ShoppingBag, label: "Listings",  value: "12",  color: "text-[#3bb397]",  bg: "bg-emerald-50" },
-  { icon: RefreshCw,   label: "Exchanges", value: "5",   color: "text-violet-500", bg: "bg-violet-50"  },
-  { icon: Heart,       label: "Wishlist",  value: "18",  color: "text-rose-500",   bg: "bg-rose-50"    },
-  { icon: Star,        label: "Rating",    value: "4.8", color: "text-amber-500",  bg: "bg-amber-50"   },
-]
-
-// ── Tab definition ─────────────────────────────────────────────────────────────
 const TABS = ["My Listings", "Wishlist", "Reviews"]
 
 function ProfilePage() {
   const navigate = useNavigate()
-  const [profile, setProfile]   = useState(null)
-  const [listings, setListings] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [isDemo, setIsDemo]     = useState(false)
+  const [profile, setProfile]     = useState(null)
+  const [listings, setListings]   = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [isDemo, setIsDemo]       = useState(false)
   const [activeTab, setActiveTab] = useState("My Listings")
 
   useEffect(() => {
@@ -72,23 +65,33 @@ function ProfilePage() {
     navigate("/")
   }
 
-  // ── Loading skeleton ──────────────────────────────────────────────────────
+  const initial = profile?.name?.[0]?.toUpperCase() || "U"
+
+  const STATS = [
+    { icon: ShoppingBag, label: "Listings",  value: listings.length || 12, color: "text-[#3bb397]",  bg: "bg-emerald-50", border: "border-emerald-100" },
+    { icon: RefreshCw,   label: "Exchanges", value: 5,                      color: "text-violet-500", bg: "bg-violet-50",  border: "border-violet-100" },
+    { icon: Heart,       label: "Wishlist",  value: 18,                     color: "text-rose-500",   bg: "bg-rose-50",    border: "border-rose-100" },
+    { icon: Star,        label: "Rating",    value: profile?.rating || 4.8, color: "text-amber-500",  bg: "bg-amber-50",   border: "border-amber-100" },
+  ]
+
+  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f2f4f7]">
+      <div className="min-h-screen bg-[#f4f6f8]">
         {/* Cover skeleton */}
-        <div className="h-48 bg-gray-200 animate-pulse" />
-        <div className="max-w-[1000px] mx-auto px-4 sm:px-6 -mt-16 pb-10">
+        <div className="h-64 bg-gradient-to-br from-[#0f172a] to-[#1e293b] animate-pulse" />
+        <div className="max-w-[1000px] mx-auto px-4 sm:px-6 -mt-20 pb-10 relative z-10">
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-6 animate-pulse">
-            <div className="flex items-end gap-4 mb-6">
-              <div className="w-24 h-24 rounded-3xl bg-gray-200 shrink-0" />
-              <div className="flex-1 space-y-2 mb-2">
-                <div className="h-6 w-48 bg-gray-200 rounded-full" />
+            <div className="flex items-end gap-5 mb-6">
+              <div className="w-28 h-28 rounded-3xl bg-gray-200 shrink-0 border-4 border-white shadow-xl" />
+              <div className="flex-1 space-y-3 mb-2">
+                <div className="h-7 w-48 bg-gray-200 rounded-full" />
                 <div className="h-4 w-64 bg-gray-200 rounded-full" />
+                <div className="h-4 w-32 bg-gray-200 rounded-full" />
               </div>
             </div>
             <div className="grid grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-20 bg-gray-100 rounded-2xl" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-gray-100 rounded-2xl" />)}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -99,62 +102,104 @@ function ProfilePage() {
     )
   }
 
-  const initial = profile?.name?.[0]?.toUpperCase() || "U"
-
   return (
-    <div className="min-h-screen bg-[#f2f4f7]">
+    <div className="min-h-screen bg-[#f4f6f8]">
 
-      {/* ── COVER BANNER ──────────────────────────────────────────────────── */}
-      <div className="relative h-52 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#134e4a] overflow-hidden">
-        {/* Decorative blobs */}
-        <div className="absolute top-[-40px] right-[-60px] w-80 h-80 rounded-full bg-[#3bb397]/15 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-20px] left-[30%] w-56 h-56 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
-        {/* Sparkle dots */}
-        <Sparkles className="absolute top-6 right-8 w-5 h-5 text-[#3bb397]/40" />
-        <Sparkles className="absolute bottom-8 left-10 w-4 h-4 text-white/20" />
+      {/* ── HERO COVER ──────────────────────────────────────────────────────── */}
+      <div className="relative h-64 md:h-72 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#134e4a] overflow-hidden">
+        {/* Animated blobs */}
+        <div className="absolute top-[-60px] right-[-60px] w-96 h-96 rounded-full bg-[#3bb397]/15 blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-[-40px] left-[10%] w-72 h-72 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute top-[20%] left-[50%] w-48 h-48 rounded-full bg-amber-500/5 blur-3xl pointer-events-none" />
 
-        {/* Settings shortcut */}
-        <button className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all text-white">
-          <Settings className="w-4 h-4" />
-        </button>
+        {/* Sparkles decoration */}
+        <Sparkles className="absolute top-6 right-12 w-5 h-5 text-[#3bb397]/50" />
+        <Sparkles className="absolute bottom-10 left-10 w-4 h-4 text-white/20" />
+        <Sparkles className="absolute top-12 left-1/3 w-3 h-3 text-violet-400/30" />
+
+        {/* Badge */}
+        <div className="absolute top-6 left-4 sm:left-6 lg:left-10 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-[#3bb397]" />
+          <span className="text-[#3bb397] text-xs font-bold tracking-[0.2em] uppercase">My Account</span>
+        </div>
+
+        {/* Settings + Actions */}
+        <div className="absolute top-5 right-4 sm:right-6 flex items-center gap-2">
+          <button className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all text-white border border-white/10">
+            <Settings className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 h-9 px-4 rounded-full bg-white/10 hover:bg-red-500/80 backdrop-blur-sm text-white text-xs font-bold border border-white/10 transition-all"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+        </div>
+
+        {/* Page title */}
+        <div className="absolute bottom-8 left-4 sm:left-6 lg:left-10">
+          <h1 className="text-3xl md:text-4xl font-black text-white leading-tight">
+            Your <span className="text-[#3bb397]">Profile</span>
+          </h1>
+        </div>
       </div>
 
-      {/* ── MAIN CONTENT ──────────────────────────────────────────────────── */}
-      <div className="max-w-[1000px] mx-auto px-4 sm:px-6 -mt-16 pb-16 relative z-10">
+      {/* ── MAIN ────────────────────────────────────────────────────────────── */}
+      <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 -mt-20 pb-16 relative z-10">
 
-        {/* ── PROFILE CARD ──────────────────────────────────────────────── */}
+        {/* ── PROFILE CARD ──────────────────────────────────────────────────── */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 mb-6">
 
           {/* Avatar + Name Row */}
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-5 mb-8">
+
             {/* Avatar */}
             <div className="relative shrink-0">
-              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#3bb397] to-[#1f826a] flex items-center justify-center shadow-xl shadow-emerald-500/30 border-4 border-white">
-                <span className="text-4xl font-black text-white">{initial}</span>
+              <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-[#3bb397] to-[#1f826a] flex items-center justify-center shadow-2xl shadow-emerald-500/30 border-4 border-white">
+                <span className="text-5xl font-black text-white">{initial}</span>
               </div>
-              <button className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-gray-900 hover:bg-[#3bb397] rounded-full flex items-center justify-center text-white shadow-md transition-all">
+              {/* Verified badge */}
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#3bb397] rounded-full flex items-center justify-center shadow-md border-2 border-white">
+                <BadgeCheck className="w-4 h-4 text-white" />
+              </div>
+              <button className="absolute top-1 right-1 w-7 h-7 bg-gray-900/70 hover:bg-gray-900 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-md transition-all">
                 <Camera className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Name + meta */}
-            <div className="flex-1">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
+            {/* Name + Meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl font-black text-gray-900">{profile?.name || "User"}</h1>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-2xl font-black text-gray-900">{profile?.name || "User"}</h2>
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#3bb397] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      <BadgeCheck className="w-3 h-3" /> Verified Seller
+                    </span>
+                  </div>
                   <p className="text-sm text-gray-400 mt-0.5">{profile?.email || ""}</p>
-                  {profile?.location && (
-                    <div className="flex items-center gap-1 text-xs text-gray-400 mt-1.5">
-                      <MapPin className="w-3 h-3" />
-                      {profile.location}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-4 mt-2 flex-wrap">
+                    {profile?.location && (
+                      <div className="flex items-center gap-1 text-xs text-gray-400 font-medium">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {profile.location}
+                      </div>
+                    )}
+                    {profile?.joined && (
+                      <div className="flex items-center gap-1 text-xs text-gray-400 font-medium">
+                        <Calendar className="w-3.5 h-3.5" />
+                        Joined {profile.joined}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {/* Actions */}
-                <div className="flex items-center gap-2 flex-wrap">
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-2 shrink-0">
                   <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:border-[#3bb397] hover:text-[#3bb397] transition-all">
                     <Edit3 className="w-3.5 h-3.5" />
-                    Edit Profile
+                    Edit
                   </button>
                   <Link
                     to="/create-listing"
@@ -163,58 +208,59 @@ function ProfilePage() {
                     <Plus className="w-3.5 h-3.5" />
                     New Listing
                   </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Logout</span>
-                  </button>
                 </div>
               </div>
 
               {/* Bio */}
               {profile?.bio && (
-                <p className="text-sm text-gray-500 mt-3 max-w-lg leading-relaxed">{profile.bio}</p>
+                <p className="text-sm text-gray-500 mt-3 leading-relaxed max-w-lg">{profile.bio}</p>
               )}
             </div>
           </div>
 
-          {/* ── STATS ROW ─────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {STATS.map(({ icon: Icon, label, value, color, bg }) => (
-              <div key={label} className={`${bg} rounded-2xl p-4 flex flex-col gap-1 group hover:scale-[1.02] transition-transform cursor-default`}>
-                <Icon className={`w-5 h-5 ${color} mb-1`} />
-                <span className="text-2xl font-black text-gray-800">{value}</span>
-                <span className="text-xs font-semibold text-gray-500">{label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Rating bar */}
+          {/* ── RATING BAR ─────────────────────────────────────────────────── */}
           {profile?.rating && (
-            <div className="mt-4 flex items-center gap-2">
+            <div className="flex items-center gap-3 mb-6 p-4 bg-amber-50 border border-amber-100 rounded-2xl">
               <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className={`w-4 h-4 ${i < Math.floor(profile.rating) ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"}`} />
                 ))}
               </div>
-              <span className="text-sm font-bold text-gray-700">{profile.rating}</span>
+              <span className="text-sm font-black text-gray-800">{profile.rating}</span>
               <span className="text-sm text-gray-400">({profile.reviews || 0} reviews)</span>
+              <span className="ml-auto text-xs font-bold text-amber-600">⭐ Top Seller</span>
             </div>
           )}
+
+          {/* ── STATS GRID ─────────────────────────────────────────────────── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {STATS.map(({ icon: Icon, label, value, color, bg, border }) => (
+              <div
+                key={label}
+                className={`${bg} border ${border} rounded-2xl p-4 flex flex-col gap-1.5 group hover:scale-[1.03] transition-transform cursor-default`}
+              >
+                <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
+                  <Icon className={`w-4 h-4 ${color}`} />
+                </div>
+                <span className="text-2xl font-black text-gray-800">{value}</span>
+                <span className="text-xs font-semibold text-gray-500">{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* ── DEMO NOTICE ───────────────────────────────────────────────── */}
+        {/* ── DEMO NOTICE ──────────────────────────────────────────────────── */}
         {isDemo && (
           <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-2xl px-4 py-3 mb-5">
             <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
             <span><strong>Demo Mode</strong> — Backend unavailable. Showing a preview profile.</span>
-            <Link to="/login" className="ml-auto shrink-0 text-amber-700 underline font-semibold text-xs whitespace-nowrap">Sign In →</Link>
+            <Link to="/login" className="ml-auto shrink-0 text-amber-700 underline font-bold text-xs whitespace-nowrap flex items-center gap-1">
+              Sign In <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
         )}
 
-        {/* ── TABS ──────────────────────────────────────────────────────── */}
+        {/* ── TABS ─────────────────────────────────────────────────────────── */}
         <div className="flex items-center gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 mb-6 w-fit">
           {TABS.map((tab) => (
             <button
@@ -223,7 +269,7 @@ function ProfilePage() {
               className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${
                 activeTab === tab
                   ? "bg-gray-900 text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-800"
+                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
               }`}
             >
               {tab}
@@ -231,36 +277,41 @@ function ProfilePage() {
           ))}
         </div>
 
-        {/* ── MY LISTINGS TAB ───────────────────────────────────────────── */}
+        {/* ── MY LISTINGS TAB ──────────────────────────────────────────────── */}
         {activeTab === "My Listings" && (
           <>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-black text-gray-800">My Listings</h2>
-                <p className="text-sm text-gray-400">{listings.length} listing{listings.length !== 1 ? "s" : ""} posted</p>
+                <h3 className="text-xl font-black text-gray-800">My Listings</h3>
+                <p className="text-sm text-gray-400 mt-0.5">
+                  {listings.length} listing{listings.length !== 1 ? "s" : ""} posted
+                </p>
               </div>
-              <Link
-                to="/listings"
-                className="flex items-center gap-1 text-sm font-semibold text-[#3bb397] hover:text-[#2a9d82] transition-colors"
-              >
-                View All <ChevronRight className="w-4 h-4" />
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/listings"
+                  className="flex items-center gap-1 text-sm font-semibold text-[#3bb397] hover:text-[#2a9d82] transition-colors"
+                >
+                  View All <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
 
             {listings.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-gray-100">
+              <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
                 <div className="w-20 h-20 rounded-3xl bg-gray-50 flex items-center justify-center mb-5">
-                  <Package className="w-10 h-10 text-gray-300" />
+                  <PackageOpen className="w-10 h-10 text-gray-300" />
                 </div>
-                <h3 className="text-lg font-black text-gray-700 mb-2">No listings yet</h3>
+                <h4 className="text-lg font-black text-gray-700 mb-2">No listings yet</h4>
                 <p className="text-gray-400 text-sm max-w-xs mb-6 leading-relaxed">
                   Start sharing your homemade goods with the community.
                 </p>
                 <Link
                   to="/create-listing"
-                  className="px-6 py-3 bg-[#3bb397] text-white font-bold rounded-full hover:bg-[#2a9d82] transition-all shadow-md shadow-emerald-500/30"
+                  className="flex items-center gap-2 px-6 py-3 bg-[#3bb397] text-white font-bold rounded-full hover:bg-[#2a9d82] transition-all shadow-md shadow-emerald-500/30"
                 >
-                  + Create Your First Listing
+                  <Plus className="w-4 h-4" />
+                  Create Your First Listing
                 </Link>
               </div>
             ) : (
@@ -268,9 +319,10 @@ function ProfilePage() {
                 {listings.map((listing) => (
                   <div key={listing.id} className="relative group">
                     <ListingCard listing={listing} />
+                    {/* Edit overlay button */}
                     <Link
                       to={`/edit/${listing.id}`}
-                      className="absolute top-3 right-12 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all"
+                      className="absolute top-3 right-12 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200"
                     >
                       <Edit3 className="w-3.5 h-3.5 text-gray-600" />
                     </Link>
@@ -281,38 +333,43 @@ function ProfilePage() {
           </>
         )}
 
-        {/* ── WISHLIST TAB ──────────────────────────────────────────────── */}
+        {/* ── WISHLIST TAB ─────────────────────────────────────────────────── */}
         {activeTab === "Wishlist" && (
-          <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-gray-100">
+          <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
             <div className="w-20 h-20 rounded-3xl bg-rose-50 flex items-center justify-center mb-5">
               <Heart className="w-10 h-10 text-rose-300" />
             </div>
-            <h3 className="text-lg font-black text-gray-700 mb-2">Your Wishlist</h3>
+            <h4 className="text-lg font-black text-gray-700 mb-2">Your Wishlist</h4>
             <p className="text-gray-400 text-sm max-w-xs mb-6 leading-relaxed">
               Items you've saved will appear here. Start browsing to find something you love!
             </p>
-            <Link to="/listings" className="px-6 py-3 bg-[#3bb397] text-white font-bold rounded-full hover:bg-[#2a9d82] transition-all shadow-md">
-              Browse Listings
+            <Link
+              to="/listings"
+              className="flex items-center gap-2 px-6 py-3 bg-[#3bb397] text-white font-bold rounded-full hover:bg-[#2a9d82] transition-all shadow-md"
+            >
+              Browse Listings <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         )}
 
-        {/* ── REVIEWS TAB ───────────────────────────────────────────────── */}
+        {/* ── REVIEWS TAB ──────────────────────────────────────────────────── */}
         {activeTab === "Reviews" && (
-          <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-gray-100">
+          <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
             <div className="w-20 h-20 rounded-3xl bg-amber-50 flex items-center justify-center mb-5">
               <TrendingUp className="w-10 h-10 text-amber-300" />
             </div>
-            <h3 className="text-lg font-black text-gray-700 mb-2">Reviews & Ratings</h3>
+            <h4 className="text-lg font-black text-gray-700 mb-2">Reviews & Ratings</h4>
             <p className="text-gray-400 text-sm max-w-xs mb-6 leading-relaxed">
               Reviews from your buyers and exchange partners will appear here.
             </p>
-            <div className="flex items-center gap-2 justify-center">
+            <div className="flex items-center gap-2 justify-center mb-2">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />
               ))}
-              <span className="text-gray-500 text-sm ml-1 font-semibold">4.8 avg rating</span>
             </div>
+            <span className="text-gray-500 text-sm font-semibold">
+              {profile?.rating || 4.8} avg rating · {profile?.reviews || 0} reviews
+            </span>
           </div>
         )}
 
