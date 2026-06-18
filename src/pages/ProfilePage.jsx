@@ -2,31 +2,14 @@ import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   User, Package, Plus, LogOut, Edit3, MapPin, Star,
-  ShoppingBag, RefreshCw, Heart, Settings, ChevronRight,
+  ShoppingBag, RefreshCw, Heart, ChevronRight,
   Camera, Sparkles, TrendingUp, Calendar, BadgeCheck,
-  ArrowRight, PackageOpen
+  ArrowRight, PackageOpen, Trash2
 } from "lucide-react"
 import ListingCard from "@/components/ListingCard"
 import ListingCardSkeleton from "@/components/ListingCardSkeleton"
-import { getUserListings, getProfile } from "@/api/listings"
-
-// ── Demo fallback ──────────────────────────────────────────────────────────────
-const DEMO_PROFILE = {
-  name: "Priya Sharma",
-  email: "priya.sharma@email.com",
-  location: "Chandigarh, Punjab",
-  joined: "January 2024",
-  bio: "Homemade baker & craft enthusiast. I love creating handmade goodies for my community! 🍪",
-  avatar: null,
-  rating: 4.8,
-  reviews: 24,
-}
-
-const DEMO_LISTINGS = [
-  { id: 1, title: "Homemade Chocolate Chip Cookies", price: 150, category: "Food & Bakery", pickup_location: "Hoshiarpur, Punjab", listing_type: "sell", image_urls: ["https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=600"] },
-  { id: 2, title: "Hand Knitted Wool Sweater", price: 850, category: "Clothing", pickup_location: "Chandigarh, Punjab", listing_type: "exchange", image_urls: ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600"] },
-  { id: 3, title: "Lavender Scented Soy Candle", price: 200, category: "Candles & Soaps", pickup_location: "Amritsar, Punjab", listing_type: "sell", image_urls: ["https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600"] },
-]
+import { getUserListings, getProfile, deleteListing } from "@/api/listings"
+import { updateMe } from "@/api/auth"
 
 const TABS = ["My Listings", "Wishlist", "Reviews"]
 
@@ -35,8 +18,11 @@ function ProfilePage() {
   const [profile, setProfile]     = useState(null)
   const [listings, setListings]   = useState([])
   const [loading, setLoading]     = useState(true)
-  const [isDemo, setIsDemo]       = useState(false)
   const [activeTab, setActiveTab] = useState("My Listings")
+  const [editing, setEditing]     = useState(false)
+  const [newName, setNewName]     = useState("")
+  const [saving, setSaving]       = useState(false)
+  const [saveError, setSaveError] = useState("")
 
   useEffect(() => {
     async function fetchData() {
@@ -46,13 +32,13 @@ function ProfilePage() {
           getProfile(),
           getUserListings(),
         ])
-        setProfile(profileData.user || profileData)
+        const p = profileData.user || profileData
+        setProfile(p)
+        setNewName(p.username || p.name || "")
         setListings(listingsData.listings || listingsData)
-        setIsDemo(false)
       } catch {
-        setProfile(DEMO_PROFILE)
-        setListings(DEMO_LISTINGS)
-        setIsDemo(true)
+        const token = localStorage.getItem("access_token")
+        if (!token) navigate("/login")
       } finally {
         setLoading(false)
       }
@@ -61,17 +47,45 @@ function ProfilePage() {
   }, [])
 
   function handleLogout() {
-    localStorage.removeItem("token")
+    localStorage.removeItem("access_token")
     navigate("/")
   }
 
-  const initial = profile?.name?.[0]?.toUpperCase() || "U"
+  async function handleDelete(id) {
+    if (!window.confirm("Are you sure you want to delete this listing?")) return
+    try {
+      await deleteListing(id)
+      setListings((prev) => prev.filter((listing) => listing.id !== id))
+    } catch (error) {
+      alert("Failed to delete listing. Please try again.")
+    }
+  }
+
+  async function handleSaveName() {
+    if (!newName.trim() || newName.trim() === (profile?.username || profile?.name)) {
+      setEditing(false)
+      return
+    }
+    setSaving(true)
+    setSaveError("")
+    try {
+      const updated = await updateMe(newName.trim())
+      setProfile((prev) => ({ ...prev, ...updated }))
+      setEditing(false)
+    } catch (err) {
+      setSaveError(err?.response?.data?.detail || "Failed to update username")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const initial = (profile?.username || profile?.name)?.[0]?.toUpperCase() || "U"
 
   const STATS = [
-    { icon: ShoppingBag, label: "Listings",  value: listings.length || 12, color: "text-[#3bb397]",  bg: "bg-emerald-50", border: "border-emerald-100" },
-    { icon: RefreshCw,   label: "Exchanges", value: 5,                      color: "text-violet-500", bg: "bg-violet-50",  border: "border-violet-100" },
-    { icon: Heart,       label: "Wishlist",  value: 18,                     color: "text-rose-500",   bg: "bg-rose-50",    border: "border-rose-100" },
-    { icon: Star,        label: "Rating",    value: profile?.rating || 4.8, color: "text-amber-500",  bg: "bg-amber-50",   border: "border-amber-100" },
+    { icon: ShoppingBag, label: "Listings",  value: listings.length,        color: "text-[#3bb397]",  bg: "bg-emerald-50", border: "border-emerald-100" },
+    { icon: RefreshCw,   label: "Exchanges", value: profile?.exchanges ?? 0, color: "text-violet-500", bg: "bg-violet-50",  border: "border-violet-100" },
+    { icon: Heart,       label: "Wishlist",  value: profile?.wishlist  ?? 0, color: "text-rose-500",   bg: "bg-rose-50",    border: "border-rose-100" },
+    { icon: Star,        label: "Rating",    value: profile?.rating    ?? "—", color: "text-amber-500",  bg: "bg-amber-50",   border: "border-amber-100" },
   ]
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -123,11 +137,24 @@ function ProfilePage() {
           <span className="text-[#3bb397] text-xs font-bold tracking-[0.2em] uppercase">My Account</span>
         </div>
 
-        {/* Settings + Actions */}
+        {/* User info chip + Logout */}
         <div className="absolute top-5 right-4 sm:right-6 flex items-center gap-2">
-          <button className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all text-white border border-white/10">
-            <Settings className="w-4 h-4" />
-          </button>
+          {/* Logged-in user chip */}
+          <div className="hidden sm:flex items-center gap-2.5 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full pl-1.5 pr-4 py-1.5">
+            {/* Mini avatar */}
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#3bb397] to-[#1f826a] flex items-center justify-center shrink-0 shadow-md">
+              <span className="text-xs font-black text-white">{initial}</span>
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="text-white text-xs font-bold truncate max-w-[120px]">
+                {profile?.username || profile?.name || "User"}
+              </span>
+              <span className="text-white/50 text-[10px] truncate max-w-[120px]">
+                {profile?.email || ""}
+              </span>
+            </div>
+          </div>
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 h-9 px-4 rounded-full bg-white/10 hover:bg-red-500/80 backdrop-blur-sm text-white text-xs font-bold border border-white/10 transition-all"
@@ -136,6 +163,7 @@ function ProfilePage() {
             <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
+
 
         {/* Page title */}
         <div className="absolute bottom-8 left-4 sm:left-6 lg:left-10">
@@ -172,12 +200,43 @@ function ProfilePage() {
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-2xl font-black text-gray-900">{profile?.name || "User"}</h2>
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#3bb397] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                      <BadgeCheck className="w-3 h-3" /> Verified Seller
-                    </span>
-                  </div>
+                  {/* Name row — static or editing */}
+                  {editing ? (
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <input
+                          autoFocus
+                          value={newName}
+                          onChange={(e) => { setNewName(e.target.value); setSaveError("") }}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") setEditing(false) }}
+                          className="text-2xl font-black text-gray-900 border-b-2 border-[#3bb397] outline-none bg-transparent w-48 sm:w-64 placeholder-gray-300"
+                          placeholder="Enter username"
+                          maxLength={30}
+                        />
+                        <button
+                          onClick={handleSaveName}
+                          disabled={saving}
+                          className="px-3 py-1 rounded-lg bg-[#3bb397] text-white text-xs font-bold hover:bg-[#2a9d82] transition-all disabled:opacity-50"
+                        >
+                          {saving ? "Saving…" : "Save"}
+                        </button>
+                        <button
+                          onClick={() => { setEditing(false); setSaveError(""); setNewName(profile?.username || profile?.name || "") }}
+                          className="px-3 py-1 rounded-lg border border-gray-200 text-gray-500 text-xs font-bold hover:border-gray-400 transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      {saveError && <p className="text-xs text-red-500 font-medium">{saveError}</p>}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-2xl font-black text-gray-900">{profile?.username || profile?.name || "User"}</h2>
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-[#3bb397] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        <BadgeCheck className="w-3 h-3" /> Verified Seller
+                      </span>
+                    </div>
+                  )}
                   <p className="text-sm text-gray-400 mt-0.5">{profile?.email || ""}</p>
                   <div className="flex items-center gap-4 mt-2 flex-wrap">
                     {profile?.location && (
@@ -197,10 +256,15 @@ function ProfilePage() {
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:border-[#3bb397] hover:text-[#3bb397] transition-all">
-                    <Edit3 className="w-3.5 h-3.5" />
-                    Edit
-                  </button>
+                  {!editing && (
+                    <button
+                      onClick={() => { setEditing(true); setNewName(profile?.username || profile?.name || "") }}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:border-[#3bb397] hover:text-[#3bb397] transition-all"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+                  )}
                   <Link
                     to="/create-listing"
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#3bb397] hover:bg-[#2a9d82] text-white text-sm font-bold transition-all shadow-md shadow-emerald-500/25"
@@ -248,17 +312,6 @@ function ProfilePage() {
             ))}
           </div>
         </div>
-
-        {/* ── DEMO NOTICE ──────────────────────────────────────────────────── */}
-        {isDemo && (
-          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-2xl px-4 py-3 mb-5">
-            <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-            <span><strong>Demo Mode</strong> — Backend unavailable. Showing a preview profile.</span>
-            <Link to="/login" className="ml-auto shrink-0 text-amber-700 underline font-bold text-xs whitespace-nowrap flex items-center gap-1">
-              Sign In <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-        )}
 
         {/* ── TABS ─────────────────────────────────────────────────────────── */}
         <div className="flex items-center gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 mb-6 w-fit">
@@ -319,13 +372,23 @@ function ProfilePage() {
                 {listings.map((listing) => (
                   <div key={listing.id} className="relative group">
                     <ListingCard listing={listing} />
-                    {/* Edit overlay button */}
-                    <Link
-                      to={`/edit/${listing.id}`}
-                      className="absolute top-3 right-12 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200"
-                    >
-                      <Edit3 className="w-3.5 h-3.5 text-gray-600" />
-                    </Link>
+                    {/* Actions overlay buttons */}
+                    <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                      <Link
+                        to={`/edit/${listing.id}`}
+                        className="w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white flex items-center justify-center shadow-md"
+                        title="Edit Listing"
+                      >
+                        <Edit3 className="w-4 h-4 text-gray-600 hover:text-[#3bb397] transition-colors" />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(listing.id)}
+                        className="w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white flex items-center justify-center shadow-md"
+                        title="Delete Listing"
+                      >
+                        <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-500 transition-colors" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

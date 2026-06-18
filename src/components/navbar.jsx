@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Menu, X, Search, ShoppingBag, ChevronDown, Bell, Heart, User, Flame } from "lucide-react"
+import { getUnreadCount } from "@/api/notifications"
 
 const navCategories = [
   "All Categories",
@@ -29,13 +30,44 @@ function Navbar() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
-  const [cartCount] = useState(0)
+  const [cartCount, setCartCount] = useState(0)
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("access_token"))
+  const [unreadCount, setUnreadCount] = useState(0)
   const categoryRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
 
   useEffect(() => {
+    function updateCount() {
+      try {
+        const stored = localStorage.getItem("shuffleit_cart")
+        if (stored) {
+          const items = JSON.parse(stored)
+          setCartCount(items.reduce((sum, i) => sum + (i.qty || 1), 0))
+        } else {
+          setCartCount(0)
+        }
+      } catch {
+        setCartCount(0)
+      }
+    }
+    window.addEventListener("storage", updateCount)
+    // Custom local event for same-window updates
+    window.addEventListener("cart-updated", updateCount)
+    updateCount()
+    return () => {
+      window.removeEventListener("storage", updateCount)
+      window.removeEventListener("cart-updated", updateCount)
+    }
+  }, [])
+
+  useEffect(() => {
     setIsMobileMenuOpen(false)
+    const loggedIn = !!localStorage.getItem("access_token")
+    setIsLoggedIn(loggedIn)
+    if (loggedIn) {
+      getUnreadCount().then(setUnreadCount).catch(() => {})
+    }
   }, [location.pathname])
 
   useEffect(() => {
@@ -162,22 +194,41 @@ function Navbar() {
             </button>
 
             {/* Notifications */}
-            <button className="hidden lg:flex relative flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-gray-500 hover:text-[#3bb397] hover:bg-emerald-50 transition-all">
+            <Link
+              to="/alerts"
+              className="hidden lg:flex relative flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-gray-500 hover:text-[#3bb397] hover:bg-emerald-50 transition-all"
+            >
               <div className="relative">
                 <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[9px] font-black rounded-full border-2 border-white flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </div>
               <span className="text-[10px] font-semibold">Alerts</span>
-            </button>
-
-            {/* Sign In */}
-            <Link
-              to="/login"
-              className="hidden sm:flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-gray-500 hover:text-[#3bb397] hover:bg-emerald-50 transition-all group"
-            >
-              <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <span className="text-[10px] font-semibold">Sign In</span>
             </Link>
+
+            {/* Sign In / Profile */}
+            {isLoggedIn ? (
+              <Link
+                to="/profile"
+                className="hidden sm:flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-[#3bb397] hover:bg-emerald-50 transition-all group"
+              >
+                <div className="w-5 h-5 rounded-full bg-[#3bb397] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <User className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-[10px] font-semibold">Profile</span>
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="hidden sm:flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-gray-500 hover:text-[#3bb397] hover:bg-emerald-50 transition-all group"
+              >
+                <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-semibold">Sign In</span>
+              </Link>
+            )}
 
             {/* Cart */}
             <Link
@@ -196,13 +247,15 @@ function Navbar() {
               )}
             </Link>
 
-            {/* Register */}
-            <Link
-              to="/register"
-              className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#3bb397] text-sm font-bold text-[#3bb397] hover:bg-[#3bb397] hover:text-white transition-all shrink-0"
-            >
-              Register
-            </Link>
+            {/* Register — hidden when logged in */}
+            {!isLoggedIn && (
+              <Link
+                to="/register"
+                className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#3bb397] text-sm font-bold text-[#3bb397] hover:bg-[#3bb397] hover:text-white transition-all shrink-0"
+              >
+                Register
+              </Link>
+            )}
 
             {/* Mobile Hamburger */}
             <button
@@ -272,20 +325,30 @@ function Navbar() {
               </Link>
             ))}
             <div className="h-px bg-gray-100 my-2" />
-            <div className="grid grid-cols-2 gap-3">
+            {isLoggedIn ? (
               <Link
-                to="/login"
-                className="flex items-center justify-center py-2.5 rounded-xl border-2 border-gray-200 text-sm font-bold text-gray-700 hover:border-[#3bb397] hover:text-[#3bb397] transition-all"
+                to="/profile"
+                className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#3bb397] text-sm font-bold text-white hover:bg-[#2a9d82] transition-all shadow-md shadow-emerald-500/30"
               >
-                Sign In
+                <User className="w-4 h-4" />
+                My Profile
               </Link>
-              <Link
-                to="/register"
-                className="flex items-center justify-center py-2.5 rounded-xl bg-[#3bb397] text-sm font-bold text-white hover:bg-[#2a9d82] transition-all shadow-md shadow-emerald-500/30"
-              >
-                Register
-              </Link>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  to="/login"
+                  className="flex items-center justify-center py-2.5 rounded-xl border-2 border-gray-200 text-sm font-bold text-gray-700 hover:border-[#3bb397] hover:text-[#3bb397] transition-all"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="flex items-center justify-center py-2.5 rounded-xl bg-[#3bb397] text-sm font-bold text-white hover:bg-[#2a9d82] transition-all shadow-md shadow-emerald-500/30"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>

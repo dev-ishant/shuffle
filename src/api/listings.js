@@ -1,8 +1,8 @@
 import axiosInstance from "./axiosInstance"
 
 // Get all listings
-export const getListings = async () => {
-  const response = await axiosInstance.get("/listings")
+export const getListings = async (params = {}) => {
+  const response = await axiosInstance.get("/listings", { params })
   return response.data
 }
 
@@ -14,7 +14,7 @@ export const getListingById = async (id) => {
 
 // Create a new listing with images
 export const createListing = async (formData) => {
-  const response = await axiosInstance.post("/listings", formData, {
+  const response = await axiosInstance.post("/listings/", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -24,7 +24,12 @@ export const createListing = async (formData) => {
 
 // Delete a listing
 export const deleteListing = async (id) => {
-  const response = await axiosInstance.delete(`/listings/${id}`)
+  const token = localStorage.getItem("access_token")
+  const response = await axiosInstance.delete(`/listings/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
   return response.data
 }
 
@@ -37,5 +42,11 @@ export const getProfile = async () => {
 // Get listings belonging to the current logged-in user
 export const getUserListings = async () => {
   const response = await axiosInstance.get("/listings/me/listings")
+  return response.data
+}
+
+// Update current logged-in user's profile (e.g. username)
+export const updateProfile = async (data) => {
+  const response = await axiosInstance.put("/auth/me", data)
   return response.data
 }

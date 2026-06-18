@@ -1,4 +1,14 @@
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+
 function RegisterPage() {
-  return <h1 className="text-2xl p-8">Register Page</h1>
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    navigate("/login", { replace: true })
+  }, [navigate])
+
+  return null
 }
+
 export default RegisterPage

@@ -41,15 +41,6 @@ const categories = [
 
 const sampleListings = [
   {
-    id: 1,
-    title: "Homemade Chocolate Chip Cookies",
-    price: 150,
-    category: "Food & Bakery",
-    pickup_location: "Hoshiarpur, Punjab",
-    listing_type: "sell",
-    image_urls: ["https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400"],
-  },
-  {
     id: 2,
     title: "Hand Knitted Wool Sweater",
     price: 850,

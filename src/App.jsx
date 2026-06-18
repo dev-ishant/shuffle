@@ -10,6 +10,7 @@ import ListingDetailPage from "@/pages/ListingDetailPage"
 import CreateListingPage from "@/pages/CreateListingPage"
 import ProfilePage from "@/pages/ProfilePage"
 import CartPage from "@/pages/CartPage"
+import AlertsPage from "@/pages/AlertsPage"
 
 function AppContent() {
   const location = useLocation()
@@ -32,6 +33,16 @@ function AppContent() {
         <Route path="/create-listing" element={<CreateListingPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/alerts" element={<AlertsPage />} />
+        <Route path="/wishlist" element={<CartPage />} />
+        <Route path="/how-it-works" element={<HomePage />} />
+        <Route path="/sell" element={<CreateListingPage />} />
+        <Route path="/faq" element={<HomePage />} />
+        <Route path="/contact" element={<HomePage />} />
+        <Route path="/privacy" element={<HomePage />} />
+        <Route path="/terms" element={<HomePage />} />
+        <Route path="/blog" element={<HomePage />} />
+        <Route path="/edit/:id" element={<CreateListingPage />} />
         {/* Catch-all 404 Route */}
         <Route path="*" element={
           <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gray-50">

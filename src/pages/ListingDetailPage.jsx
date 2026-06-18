@@ -1,12 +1,43 @@
 import { useState, useEffect } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
-import { MapPin, Tag, Calendar, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
+import { MapPin, Tag, Calendar, ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react"
 import { MakeOfferButton } from "@/components/ui/buttons/MakeOfferButton"
 import { PayNowButton } from "@/components/ui/buttons/PayNowButton"
 import { EditListingButton } from "@/components/ui/buttons/EditListingButton"
 import { DeleteListingButton } from "@/components/ui/buttons/DeleteListingButton"
 import LoadingSpinner from "@/components/LoadingSpinner"
 import { getListingById } from "@/api/listings"
+import OrderModal from "@/components/OrderModal"
+import ExchangeModal from "@/components/ExchangeModal"
+
+function AddToCartButton({ added, ...props }) {
+  return (
+    <button
+      className={`group relative flex items-center gap-3
+        bg-gradient-to-r ${added ? 'from-teal-500 to-emerald-500' : 'from-[#3bb397] to-[#2a9d82]'}
+        hover:from-[#2a9d82] hover:to-[#1f826a]
+        text-white font-bold text-base
+        pl-2 pr-7 py-2 rounded-full
+        shadow-md shadow-[#3bb397]/40
+        hover:shadow-lg hover:shadow-[#2a9d82]/50
+        hover:scale-[1.04] active:scale-[0.97]
+        transition-all duration-300 cursor-pointer
+        disabled:opacity-50 disabled:cursor-not-allowed
+        overflow-hidden`}
+      {...props}
+    >
+      <div className="w-9 h-9 shrink-0 opacity-0 pointer-events-none" />
+      <span className="absolute left-2 flex items-center justify-center w-9 h-9 rounded-full bg-white/25
+        transition-all duration-500 ease-in-out
+        group-hover:left-[calc(100%-2.75rem)]">
+        <ShoppingCart className="w-5 h-5" />
+      </span>
+      <span className="transition-all duration-500 ease-in-out group-hover:-translate-x-2">
+        {added ? "Added!" : "Add to Cart"}
+      </span>
+    </button>
+  )
+}
 
 function ListingTypeBadge({ type }) {
   const styles = {
@@ -29,10 +60,49 @@ function ListingTypeBadge({ type }) {
 function ListingDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [listing, setListing] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [listing, setListing]         = useState(null)
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState(null)
   const [currentImage, setCurrentImage] = useState(0)
+  const [showOrder, setShowOrder]     = useState(false)
+  const [showExchange, setShowExchange] = useState(false)
+  const [added, setAdded] = useState(false)
+
+  function handleAddToCart() {
+    try {
+      const CART_KEY = "shuffleit_cart"
+      const stored = localStorage.getItem(CART_KEY)
+      let cartItems = []
+      if (stored) {
+        cartItems = JSON.parse(stored)
+      }
+      
+      const existingIdx = cartItems.findIndex(item => item.id === listing.id)
+      if (existingIdx > -1) {
+        cartItems[existingIdx].qty += 1
+      } else {
+        cartItems.push({
+          id: listing.id,
+          title: listing.title,
+          category: listing.category || "General",
+          pickup_location: listing.pickup_location || "Local Pickup",
+          listing_type: listing.listing_type || "sell",
+          price: listing.price || 0,
+          qty: 1,
+          image: listing.image_urls?.[0] || "https://images.unsplash.com/photo-1603006905003-be475563bc59?w=400",
+        })
+      }
+      
+      localStorage.setItem(CART_KEY, JSON.stringify(cartItems))
+      window.dispatchEvent(new Event("storage"))
+      window.dispatchEvent(new Event("cart-updated"))
+      
+      setAdded(true)
+      setTimeout(() => setAdded(false), 2000)
+    } catch (err) {
+      console.error("Failed to add item to cart:", err)
+    }
+  }
 
   useEffect(() => {
     async function fetchListing() {
@@ -69,6 +139,7 @@ function ListingDetailPage() {
   const isOwner = listing.is_owner
 
   return (
+    <>
     <div className="min-h-screen bg-[#e8eaf0]">
       <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
         {/* Back button */}
@@ -187,8 +258,9 @@ function ListingDetailPage() {
                   </>
                 ) : (
                   <>
-                    <MakeOfferButton />
-                    <PayNowButton />
+                    <MakeOfferButton onClick={() => setShowExchange(true)} />
+                    <PayNowButton    onClick={() => setShowOrder(true)} />
+                    <AddToCartButton added={added} onClick={handleAddToCart} />
                   </>
                 )}
               </div>
@@ -197,6 +269,11 @@ function ListingDetailPage() {
         </div>
       </div>
     </div>
+
+    {/* Modals */}
+    {showOrder    && <OrderModal    listing={listing} onClose={() => setShowOrder(false)} />}
+    {showExchange && <ExchangeModal listing={listing} onClose={() => setShowExchange(false)} />}
+    </>
   )
 }
 

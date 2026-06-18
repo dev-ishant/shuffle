@@ -10,7 +10,6 @@ import { getListings } from "@/api/listings"
 
 // ── Demo Data ─────────────────────────────────────────────
 const DEMO_LISTINGS = [
-  { id: 1, title: "Homemade Chocolate Chip Cookies", price: 150, category: "Food & Bakery", pickup_location: "Hoshiarpur, Punjab", listing_type: "sell", image_urls: ["https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=600"] },
   { id: 2, title: "Hand Knitted Wool Sweater", price: 850, category: "Clothing", pickup_location: "Chandigarh, Punjab", listing_type: "exchange", image_urls: ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600"] },
   { id: 3, title: "Handpainted Terracotta Pot", price: 300, category: "Home Decor", pickup_location: "Ludhiana, Punjab", listing_type: "both", image_urls: ["https://images.unsplash.com/photo-1612428820979-5cadd16e98c8?w=600"] },
   { id: 4, title: "Lavender Scented Soy Candle", price: 200, category: "Candles & Soaps", pickup_location: "Amritsar, Punjab", listing_type: "sell", image_urls: ["https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600"] },

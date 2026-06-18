@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowLeft, CheckCircle2, Upload, X, Plus
@@ -86,7 +86,7 @@ function Step1({ data, setData }) {
             maxLength={100}
             value={data.title}
             onChange={(e) => setData({ ...data, title: e.target.value })}
-            placeholder="e.g. Homemade Chocolate Chip Cookies"
+            placeholder="e.g. Hand Knitted Wool Scarf"
             className={inputCls}
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-300 font-semibold">
@@ -367,6 +367,14 @@ function SuccessScreen() {
 // ── Main Page ──────────────────────────────────────────────────────────────────
 function CreateListingPage() {
   const navigate   = useNavigate()
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token")
+    if (!token) {
+      navigate("/login", { replace: true, state: { from: window.location.pathname } })
+    }
+  }, [navigate])
+
   const [step, setStep]         = useState(1)
   const [success, setSuccess]   = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -403,15 +411,34 @@ function CreateListingPage() {
       fd.append("title", formData.title)
       fd.append("description", formData.description)
       fd.append("price", formData.price || 0)
-      fd.append("category", formData.category)
-      fd.append("listing_type", formData.listing_type)
+
+      // Backend listing_type = "food" | "handmade" (derived from category)
+      const backendListingType = formData.category === "Food & Bakery" ? "food" : "handmade"
+      fd.append("listing_type", backendListingType)
+
+      // Backend transaction_type = "sell" | "exchange" | "both" (UI's listing_type)
+      // Food listings can only be sold — enforce that
+      const backendTransactionType = backendListingType === "food" ? "sell" : formData.listing_type
+      fd.append("transaction_type", backendTransactionType)
+
       fd.append("pickup_location", formData.pickup_location)
+
+      // Food-specific fields — only send for food listings
+      if (backendListingType === "food") {
+        if (formData.food_type) fd.append("food_type", formData.food_type)
+        if (formData.expiry_date) fd.append("expiry_date", formData.expiry_date)
+      }
+
       formData.images.forEach((img) => fd.append("images", img.file))
       await createListing(fd)
       setSuccess(true)
       setTimeout(() => navigate("/listings"), 2000)
     } catch (err) {
-      setError(err.message || "Failed to post listing. Please try again.")
+      const detail = err.response?.data?.detail
+      const msg = Array.isArray(detail)
+        ? detail.map((d) => d.msg).join(", ")
+        : detail || err.message || "Failed to post listing. Please try again."
+      setError(msg)
     } finally {
       setSubmitting(false)
     }

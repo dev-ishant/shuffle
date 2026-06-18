@@ -38,17 +38,74 @@ function LoginPage() {
   const [loginPassword, setLoginPassword] = useState("")
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState("")
+  const [loginFieldErrors, setLoginFieldErrors] = useState({})
 
   // Register form state
-  const [registerName, setRegisterName] = useState("")
+  const [registerUsername, setRegisterUsername] = useState("")
   const [registerEmail, setRegisterEmail] = useState("")
   const [registerPassword, setRegisterPassword] = useState("")
   const [registerLoading, setRegisterLoading] = useState(false)
   const [registerError, setRegisterError] = useState("")
+  const [registerFieldErrors, setRegisterFieldErrors] = useState({})
+
+  // ── Validation helpers ──────────────────────────────────────────────
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+  const validateLoginField = (field, value) => {
+    let error = ""
+    if (field === "email") {
+      if (!value.trim()) error = "Email is required."
+      else if (!isValidEmail(value)) error = "Enter a valid email address."
+    }
+    if (field === "password" && !value) error = "Password is required."
+    return error
+  }
+
+  const validateLogin = () => {
+    const errors = {}
+    const e = validateLoginField("email", loginEmail)
+    if (e) errors.email = e
+    const p = validateLoginField("password", loginPassword)
+    if (p) errors.password = p
+    setLoginFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const validateRegisterField = (field, value) => {
+    let error = ""
+    if (field === "username") {
+      if (!value.trim()) error = "Username is required."
+      else if (!/^[a-zA-Z]/.test(value.trim())) error = "Username must start with a letter."
+      else if (value.trim().length < 3) error = "Username must be at least 3 characters."
+      else if (!/^[a-zA-Z][a-zA-Z0-9_]+$/.test(value.trim())) error = "Only letters, numbers, and underscores allowed."
+    }
+    if (field === "email") {
+      if (!value.trim()) error = "Email is required."
+      else if (!isValidEmail(value)) error = "Enter a valid email address."
+    }
+    if (field === "password") {
+      if (!value) error = "Password is required."
+      else if (value.length < 6) error = "Password must be at least 6 characters."
+    }
+    return error
+  }
+
+  const validateRegister = () => {
+    const errors = {}
+    const u = validateRegisterField("username", registerUsername)
+    if (u) errors.username = u
+    const e = validateRegisterField("email", registerEmail)
+    if (e) errors.email = e
+    const p = validateRegisterField("password", registerPassword)
+    if (p) errors.password = p
+    setRegisterFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   // Handle Login
   const handleLogin = async () => {
     setLoginError("")
+    if (!validateLogin()) return
     setLoginLoading(true)
     try {
       await loginUser(loginEmail, loginPassword)
@@ -63,10 +120,10 @@ function LoginPage() {
   // Handle Register
   const handleRegister = async () => {
     setRegisterError("")
+    if (!validateRegister()) return
     setRegisterLoading(true)
     try {
-      await registerUser(registerName, registerEmail, registerPassword)
-      // Switch to login tab after successful registration
+      await registerUser(registerUsername, registerEmail, registerPassword)
       setIsLogin(true)
       setLoginEmail(registerEmail)
     } catch (error) {
@@ -108,21 +165,33 @@ function LoginPage() {
               </p>
             )}
 
-            <div className="flex flex-col gap-4 w-full">
-              <input
-                type="email"
-                placeholder="Email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                className="w-full bg-white/60 border border-white/80 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full bg-white/60 border border-white/80 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium"
-              />
+            <div className="flex flex-col gap-3 w-full">
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={loginEmail}
+                  onChange={(e) => { setLoginEmail(e.target.value); setLoginFieldErrors((p) => ({ ...p, email: "" })) }}
+                  onBlur={() => setLoginFieldErrors((p) => ({ ...p, email: validateLoginField("email", loginEmail) }))}
+                  className={`w-full bg-white/60 border rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium ${
+                    loginFieldErrors.email ? "border-red-400 ring-1 ring-red-300" : "border-white/80"
+                  }`}
+                />
+                {loginFieldErrors.email && <p className="text-red-500 text-xs mt-1 ml-1">{loginFieldErrors.email}</p>}
+              </div>
+              <div>
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={loginPassword}
+                  onChange={(e) => { setLoginPassword(e.target.value); setLoginFieldErrors((p) => ({ ...p, password: "" })) }}
+                  onBlur={() => setLoginFieldErrors((p) => ({ ...p, password: validateLoginField("password", loginPassword) }))}
+                  className={`w-full bg-white/60 border rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium ${
+                    loginFieldErrors.password ? "border-red-400 ring-1 ring-red-300" : "border-white/80"
+                  }`}
+                />
+                {loginFieldErrors.password && <p className="text-red-500 text-xs mt-1 ml-1">{loginFieldErrors.password}</p>}
+              </div>
 
               <p className="text-xs text-gray-500 text-left cursor-pointer hover:text-[#2a9d82] hover:underline mt-1 font-medium">
                 Forgot your password?
@@ -167,28 +236,46 @@ function LoginPage() {
               </p>
             )}
 
-            <div className="flex flex-col gap-4 w-full">
-              <input
-                type="text"
-                placeholder="Name"
-                value={registerName}
-                onChange={(e) => setRegisterName(e.target.value)}
-                className="w-full bg-white/60 border border-white/80 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={registerEmail}
-                onChange={(e) => setRegisterEmail(e.target.value)}
-                className="w-full bg-white/60 border border-white/80 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={registerPassword}
-                onChange={(e) => setRegisterPassword(e.target.value)}
-                className="w-full bg-white/60 border border-white/80 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium"
-              />
+            <div className="flex flex-col gap-3 w-full">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={registerUsername}
+                  onChange={(e) => { setRegisterUsername(e.target.value); setRegisterFieldErrors((p) => ({ ...p, username: "" })) }}
+                  onBlur={() => setRegisterFieldErrors((p) => ({ ...p, username: validateRegisterField("username", registerUsername) }))}
+                  className={`w-full bg-white/60 border rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium ${
+                    registerFieldErrors.username ? "border-red-400 ring-1 ring-red-300" : "border-white/80"
+                  }`}
+                />
+                {registerFieldErrors.username && <p className="text-red-500 text-xs mt-1 ml-1">{registerFieldErrors.username}</p>}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={registerEmail}
+                  onChange={(e) => { setRegisterEmail(e.target.value); setRegisterFieldErrors((p) => ({ ...p, email: "" })) }}
+                  onBlur={() => setRegisterFieldErrors((p) => ({ ...p, email: validateRegisterField("email", registerEmail) }))}
+                  className={`w-full bg-white/60 border rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium ${
+                    registerFieldErrors.email ? "border-red-400 ring-1 ring-red-300" : "border-white/80"
+                  }`}
+                />
+                {registerFieldErrors.email && <p className="text-red-500 text-xs mt-1 ml-1">{registerFieldErrors.email}</p>}
+              </div>
+              <div>
+                <input
+                  type="password"
+                  placeholder="Password (min. 6 characters)"
+                  value={registerPassword}
+                  onChange={(e) => { setRegisterPassword(e.target.value); setRegisterFieldErrors((p) => ({ ...p, password: "" })) }}
+                  onBlur={() => setRegisterFieldErrors((p) => ({ ...p, password: validateRegisterField("password", registerPassword) }))}
+                  className={`w-full bg-white/60 border rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5ac7ae] focus:bg-white transition-all shadow-sm placeholder:text-gray-400 font-medium ${
+                    registerFieldErrors.password ? "border-red-400 ring-1 ring-red-300" : "border-white/80"
+                  }`}
+                />
+                {registerFieldErrors.password && <p className="text-red-500 text-xs mt-1 ml-1">{registerFieldErrors.password}</p>}
+              </div>
 
               <button
                 onClick={handleRegister}
