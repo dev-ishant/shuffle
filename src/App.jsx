@@ -11,6 +11,7 @@ import CreateListingPage from "@/pages/CreateListingPage"
 import ProfilePage from "@/pages/ProfilePage"
 import CartPage from "@/pages/CartPage"
 import AlertsPage from "@/pages/AlertsPage"
+import AuditsPage from "@/pages/AuditsPage"
 
 function AppContent() {
   const location = useLocation()
@@ -34,6 +35,7 @@ function AppContent() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
+        <Route path="/audits" element={<AuditsPage />} />
         <Route path="/wishlist" element={<CartPage />} />
         <Route path="/how-it-works" element={<HomePage />} />
         <Route path="/sell" element={<CreateListingPage />} />

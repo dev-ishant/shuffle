@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Menu, X, Search, ShoppingBag, ChevronDown, Bell, Heart, User, Flame } from "lucide-react"
+import { Menu, X, Search, ShoppingBag, ChevronDown, Bell, Heart, User, Flame, ClipboardList } from "lucide-react"
 import { getUnreadCount } from "@/api/notifications"
 
 const navCategories = [
@@ -209,6 +209,17 @@ function Navbar() {
               <span className="text-[10px] font-semibold">Alerts</span>
             </Link>
 
+            {/* Audits — only when logged in */}
+            {isLoggedIn && (
+              <Link
+                to="/audits"
+                className="hidden lg:flex relative flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-gray-500 hover:text-[#3bb397] hover:bg-emerald-50 transition-all"
+              >
+                <ClipboardList className="w-5 h-5" />
+                <span className="text-[10px] font-semibold">Audits</span>
+              </Link>
+            )}
+
             {/* Sign In / Profile */}
             {isLoggedIn ? (
               <Link
@@ -311,10 +322,11 @@ function Navbar() {
 
           <div className="flex flex-col px-4 pb-5 gap-1 border-t border-gray-100 pt-3">
             {[
-              { name: "Browse Listings", path: "/listings" },
+            { name: "Browse Listings", path: "/listings" },
               { name: "How it Works", path: "/how-it-works" },
               { name: "Wishlist", path: "/wishlist" },
               { name: "Start Selling", path: "/sell" },
+              ...(isLoggedIn ? [{ name: "Audits", path: "/audits" }] : []),
             ].map((link) => (
               <Link
                 key={link.name}
